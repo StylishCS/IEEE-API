@@ -29,7 +29,7 @@ mongoose.connect(
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-
+//cors
 app.use(
   cors({
     origin: "*",
