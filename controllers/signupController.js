@@ -7,6 +7,7 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
+const path = require('path');
 
 async function signupController(req, res) {
   try {
@@ -20,9 +21,8 @@ async function signupController(req, res) {
     if (user) {
       return res.status(400).json({ msg: "user already registered.." });
     }
-    console.log(__dirname + "/uploads/profile.png");
     const result = await cloudinary.uploader.upload(
-      __dirname+"/uploads/profile.png",
+      path.resolve("./uploads", "profile.png"),
       {
         folder: "members",
       }
