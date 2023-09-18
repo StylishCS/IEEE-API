@@ -20,8 +20,9 @@ async function signupController(req, res) {
     if (user) {
       return res.status(400).json({ msg: "user already registered.." });
     }
+    console.log(__dirname + "/uploads/profile.png");
     const result = await cloudinary.uploader.upload(
-      "../IEEE API/uploads/profile.png",
+      __dirname+"/uploads/profile.png",
       {
         folder: "members",
       }
