@@ -1,9 +1,6 @@
 const { User, validate } = require("../model/User");
 const { OTP } = require("../model/OTP");
-const mongoose = require("mongoose");
 const cloudinary = require("../utils/cloudinary");
-const express = require("express");
-const router = express.Router();
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
