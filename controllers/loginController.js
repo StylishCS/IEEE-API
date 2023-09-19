@@ -18,13 +18,13 @@ async function loginController(req, res) {
       return res.status(401).json({ msg: "wrong email or password.." });
     }
 
-    if (!user.verified) {
-      return res.status(401).json({ msg: "User not verified.." });
-    }
-
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: process.env.JWT_EXPIRE_IN,
     });
+
+    if (!user.verified) {
+      return res.status(401).json({verified: user.verified, email: user.email ,token: token ,msg: "User not verified.." });
+    }
 
     const userWithoutPassword = { ...user };
     delete userWithoutPassword._doc.password;
