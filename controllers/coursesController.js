@@ -20,7 +20,7 @@ async function getCourse(req, res) {
     if (!course) {
       return res.status(404).json({ msg: "no course found.." });
     }
-    return res.status(200).json({ data: courses });
+    return res.status(200).json({ data: course });
   } catch (error) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
