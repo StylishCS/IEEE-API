@@ -57,8 +57,8 @@ async function signupController(req, res) {
       from: "IEEE OSB",
       to: req.body.email,
       subject: "Verify Creating Account",
-      text: `Your Verification code is ${otp}, Please don't share it with anyone, this code will expire in 2 minutes`,
-      html: `<p>Your Verification code is<br><h1>${otp}</h1><br>Please don't share it with anyone.<br>this code will expire in 2 minutes`,
+      text: `Your Verification code is ${otp}, Please don't share it with anyone, this code will expire in 5 minutes`,
+      html: `<p>Your Verification code is<br><h1>${otp}</h1><br>Please don't share it with anyone.<br>this code will expire in 5 minutes`,
     };
     await transporter.sendMail(message).catch((err) => {
       return res.status(400).json({ error: true, msg: "OTP NOT SENT..." });
@@ -67,7 +67,7 @@ async function signupController(req, res) {
     const d = new Date();
     d.setMinutes(d.getMinutes());
     const d2 = new Date();
-    d.setMinutes(d.getMinutes() + 2);
+    d.setMinutes(d.getMinutes() + 5);
 
     let OTP_Obj = new OTP({
       code: await bcrypt.hash(String(otp), 10),
@@ -120,8 +120,8 @@ async function resendOTP(req, res) {
     from: "IEEE OSB",
     to: req.body.email,
     subject: "Verify Creating Account",
-    text: `Your Verification code is ${otp}, Please don't share it with anyone, this code will expire in 2 minutes`,
-    html: `<p>Your Verification code is<br><h1>${otp}</h1><br>Please don't share it with anyone.<br>this code will expire in 2 minutes`,
+    text: `Your Verification code is ${otp}, Please don't share it with anyone, this code will expire in 5 minutes`,
+    html: `<p>Your Verification code is<br><h1>${otp}</h1><br>Please don't share it with anyone.<br>this code will expire in 5 minutes`,
   };
   await transporter.sendMail(message).catch((err) => {
     return res.status(400).json({ error: true, msg: "OTP NOT SENT..." });
@@ -130,7 +130,7 @@ async function resendOTP(req, res) {
   const d = new Date();
   d.setMinutes(d.getMinutes());
   const d2 = new Date();
-  d.setMinutes(d.getMinutes() + 200);
+  d.setMinutes(d.getMinutes() + 5);
 
   let OTP_Obj = new OTP({
     code: await bcrypt.hash(String(otp), 10),
