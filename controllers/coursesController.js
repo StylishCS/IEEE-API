@@ -1,12 +1,24 @@
 const { Course } = require("../model/Courses");
 const cloudinary = require("../utils/cloudinary");
-const path = require('path');
+const path = require("path");
 
 async function getCourses(req, res) {
   try {
     const courses = await Course.find();
     if (!courses) {
       return res.status(404).json({ msg: "no courses found.." });
+    }
+    return res.status(200).json({ data: courses });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function getCourse(req, res) {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ msg: "no course found.." });
     }
     return res.status(200).json({ data: courses });
   } catch (error) {
@@ -42,4 +54,57 @@ async function addCourse(req, res) {
   }
 }
 
-module.exports = { getCourses, addCourse };
+async function updateCourse(req, res) {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ msg: "course not found" });
+    }
+    let updatedCourse;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(
+        path.resolve("./uploads", req.file.filename),
+        {
+          folder: "courses",
+        }
+      );
+      updatedCourse = {
+        name: req.body.name || course.name,
+        description: req.body.description || course.description,
+        isActive: req.body.isActive || course.isActive,
+        available: req.body.available || course.available,
+        image: {
+          public_id: result.public_id,
+          url: result.secure_url,
+        },
+      };
+    } else {
+      updatedCourse = {
+        name: req.body.name || course.name,
+        description: req.body.description || course.description,
+        isActive: req.body.isActive || course.isActive,
+        available: req.body.available || course.available,
+      };
+    }
+    await course.updateOne(updatedCourse);
+    return res.status(200).json({ msg: "course updated successfuly" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function deleteCourse(req,res){
+  try {
+    const course = await Course.findById(req.params.id);
+    if(!course){
+      return res.status(404).json({msg:"course not found"});
+    }
+    await Course.findByIdAndDelete(req.params.id);
+    return res.status(200).json({msg: "course deleted successfuly"});
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+module.exports = { getCourses, getCourse, addCourse, updateCourse, deleteCourse };
