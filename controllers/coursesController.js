@@ -14,6 +14,19 @@ async function getCourses(req, res) {
   }
 }
 
+async function getActiveCourses(req, res) {
+  try {
+    const filter = {isActive: true}
+    const courses = await Course.find(filter);
+    if (!courses) {
+      return res.status(404).json({ msg: "no courses found.." });
+    }
+    return res.status(200).json({ data: courses });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
 async function getCourse(req, res) {
   try {
     const course = await Course.findById(req.params.id);
@@ -107,4 +120,11 @@ async function deleteCourse(req,res){
   }
 }
 
-module.exports = { getCourses, getCourse, addCourse, updateCourse, deleteCourse };
+module.exports = {
+  getCourses,
+  getCourse,
+  addCourse,
+  updateCourse,
+  deleteCourse,
+  getActiveCourses,
+};

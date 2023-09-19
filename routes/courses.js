@@ -8,9 +8,11 @@ const {
   addCourse,
   updateCourse,
   deleteCourse,
+  getActiveCourses,
 } = require("../controllers/coursesController");
 
 router.get("/", auth, getCourses);
+router.get("/active", auth, getActiveCourses);
 router.get("/:id", auth, getCourse);
 router.post("/addCourse", auth, upload.single("image"), addCourse);
 router.patch("/updateCourse/:id", auth, upload.single("image"), updateCourse);
