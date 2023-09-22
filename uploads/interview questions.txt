@@ -1,0 +1,15 @@
+introduce ur self
+projects?
+problem solving?
+why node js
+experience in node js
+async await || asyncorunce
+middlewares
+callback vs promises
+callback hell
+databases || sql querys
+npm
+package.json dep || scripts || run methods
+node env
+can i access DOM with node js ? and why ? => global object only
+pros and cons of node js

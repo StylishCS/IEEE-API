@@ -1,4 +1,5 @@
 const { Course } = require("../model/Courses");
+const { User } = require("../model/User");
 const cloudinary = require("../utils/cloudinary");
 const path = require("path");
 
@@ -16,7 +17,7 @@ async function getCourses(req, res) {
 
 async function getActiveCourses(req, res) {
   try {
-    const filter = {isActive: true}
+    const filter = { isActive: true };
     const courses = await Course.find(filter);
     if (!courses) {
       return res.status(404).json({ msg: "no courses found.." });
@@ -32,6 +33,18 @@ async function getCourse(req, res) {
     const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ msg: "no course found.." });
+    }
+    return res.status(200).json({ data: course });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function searchCourse(req,res){
+  try {
+    const course = await Course.find({name: req.body.name});
+    if(!course){
+      return res.status(404).json({msg: "course not found"});
     }
     return res.status(200).json({ data: course });
   } catch (error) {
@@ -107,18 +120,130 @@ async function updateCourse(req, res) {
   }
 }
 
-async function deleteCourse(req,res){
+async function deleteCourse(req, res) {
   try {
     const course = await Course.findById(req.params.id);
-    if(!course){
-      return res.status(404).json({msg:"course not found"});
+    if (!course) {
+      return res.status(404).json({ msg: "course not found" });
     }
     await Course.findByIdAndDelete(req.params.id);
-    return res.status(200).json({msg: "course deleted successfuly"});
+    return res.status(200).json({ msg: "course deleted successfuly" });
   } catch (error) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
 }
+
+async function addStudent(req, res) {
+  try {
+    const user = await User.findById(req.params.id);
+    const course = await Course.findById(req.body.id);
+    if (!user) {
+      return res.status(404).json({ msg: "user not found" });
+    }
+    if (!course) {
+      return res.status(404).json({ msg: "course not found" });
+    }
+    if (user.courses.includes(course.name)) {
+      return res.status(404).json({ msg: "course is already assigned" });
+    }
+    user.courses.push(course.name);
+    course.students.push(user.name);
+    await user.save();
+    await course.save();
+    return res.status(200).json({ msg: "Course Added Successfuly" });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function removeStudent(req, res) {
+  try {
+    const user = await User.findById(req.body.id);
+    const course = await Course.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ msg: "user not found" });
+    }
+    if (!course) {
+      return res.status(404).json({ msg: "course not found" });
+    }
+    if (!user.courses.includes(course.name)) {
+      return res.status(404).json({ msg: "course is not assigned" });
+    }
+    course.students.pull(user.name);
+    user.courses.pull(course.name);
+    await user.save();
+    await course.save();
+    return res.status(200).json({ msg: "Course Deleted Successfuly" });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function getCourseStudents(req, res) {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ msg: "course not found" });
+    }
+    return res.status(200).json({ data: course.students });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function addContent(req, res) {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ msg: "course not found" });
+    }
+    let media = {
+      secure_url: null,
+    };
+    if (req.file) {
+      media = await cloudinary.uploader.upload(
+        path.resolve("./uploads", req.file.filename),
+        {
+          folder: "content",
+          resource_type: "auto",
+        }
+      );
+    }
+    const content = {
+      title: req.body.title,
+      description: req.body.description,
+      file: media.secure_url || null,
+      week: req.body.week,
+    };
+    course.content.push(content);
+    await course.save();
+    return res.status(200).json({ msg: "content added successfuly" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function deleteContent(req, res) {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ msg: "course not found" });
+    }
+    let item = course.content.find((object) => object.title === req.body.title);
+    if (!item) {
+      return res.status(404).json({ msg: "content not found" });
+    }
+    console.log(item);
+    course.content.pull(item);
+    await course.save();
+    return res.status(200).json({ msg: "content deleted" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
 
 module.exports = {
   getCourses,
@@ -127,4 +252,10 @@ module.exports = {
   updateCourse,
   deleteCourse,
   getActiveCourses,
+  addStudent,
+  removeStudent,
+  getCourseStudents,
+  addContent,
+  deleteContent,
+  searchCourse,
 };

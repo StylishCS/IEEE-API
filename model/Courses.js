@@ -28,10 +28,18 @@ const courseSchema = new mongoose.Schema(
         required: true,
       },
     },
+    students: {
+      type: Array,
+      default: [],
+    },
+    content: {
+      type: Array,
+      default: [],
+    },
   },
   { timestamps: true }
 );
 
-const Course = mongoose.model('Course', courseSchema);
+const Course = mongoose.model("Course", courseSchema);
 
 exports.Course = Course;

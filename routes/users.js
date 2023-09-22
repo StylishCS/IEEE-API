@@ -2,12 +2,14 @@ var express = require("express");
 var router = express.Router();
 const upload = require("../utils/uploadImage");
 const auth = require("../middlewares/protect");
+
 const {
   signupController,
   verify,
   resendOTP,
   resetRequest,
   resetPassword,
+  updateUserAccount,
 } = require("../controllers/signupController");
 const { loginController } = require("../controllers/loginController");
 
@@ -18,5 +20,6 @@ router.post("/login", loginController);
 router.post("/forgot-password-otp", resendOTP);
 router.post("/forgot-password-verify", resetRequest);
 router.post("/forgot-password-reset", auth, resetPassword);
+router.patch("/updateUser/:id", auth, upload.single("image"), updateUserAccount);
 
 module.exports = router;

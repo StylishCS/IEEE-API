@@ -4,7 +4,7 @@ const cloudinary = require("../utils/cloudinary");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
-const path = require('path');
+const path = require("path");
 
 async function signupController(req, res) {
   try {
@@ -36,7 +36,7 @@ async function signupController(req, res) {
       },
       university_code: req.body.university_code,
     });
-
+    await OTP.deleteMany({ email: user.email });
     let transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       service: "Gmail",
@@ -78,7 +78,7 @@ async function signupController(req, res) {
 
     const userWithoutPassword = { ...user };
     delete userWithoutPassword._doc.password;
-    
+
     await OTP_Obj.save();
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: process.env.JWT_EXPIRE_IN,
@@ -192,7 +192,9 @@ async function resetRequest(req, res) {
       expiresIn: process.env.JWT_EXPIRE_IN,
     });
     await OTP.deleteMany({ email: user.email });
-    return res.status(200).json({ msg: "Procced to reset password..", token: token });
+    return res
+      .status(200)
+      .json({ msg: "Procced to reset password..", token: token });
   } catch (error) {
     return res.status(500).json({ msg: "Internal server error." });
   }
@@ -233,10 +235,182 @@ async function resetPassword(req, res) {
   }
 }
 
+async function createEditorController(req, res) {
+  try {
+    const { error } = validate(req.body);
+    if (error) {
+      return res
+        .status(400)
+        .json({ msg: "validation error", error: error.details[0].message });
+    }
+    let user = await User.findOne({ email: req.body.email });
+    if (user) {
+      return res.status(400).json({ msg: "editor already registered.." });
+    }
+    const result = await cloudinary.uploader.upload(
+      path.resolve("./uploads", "profile.png"),
+      {
+        folder: "editors",
+      }
+    );
+    var randomstring = Math.random().toString(36).slice(-8);
+    user = new User({
+      name: req.body.name,
+      email: req.body.email,
+      password: await bcrypt.hash(randomstring, 10),
+      verified: true,
+      role: "EDITOR",
+      image: {
+        public_id: result.public_id,
+        url: result.secure_url,
+      },
+      university_code: req.body.university_code,
+    });
+
+    let transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      service: "Gmail",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.NODEMAILER_USER,
+        pass: process.env.NODEMAILER_PASSWORD,
+      },
+    });
+
+    let message = {
+      from: "IEEE OSB",
+      to: req.body.email,
+      subject: "Welcome on board!",
+      text: `Congrats! Your Editor account have been successfuly created, Your Email Address is ${req.body.email} and your password is ${randomstring}, please don't share it with anyone!`,
+      html: `<h1>Congrats! Your Editor account have been successfuly created</h1><br><p>Your Email Address is <h3>${req.body.email}</h3> and your password is <h3>${randomstring}</h3>, please don't share it with anyone!</p>`,
+    };
+    await transporter.sendMail(message).catch((err) => {
+      return res.status(400).json({ error: true, msg: "MAIL NOT SENT..." });
+    });
+    await user.save();
+
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword._doc.password;
+
+    return res.status(201).json({
+      user: userWithoutPassword._doc,
+    });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function resetEditorPasswordController(req, res) {
+  try {
+    const editor = await User.findOne({ email: req.body.email });
+    if (!editor) {
+      return res.status(404).json({ msg: "editor not found" });
+    }
+    var randomstring = Math.random().toString(36).slice(-8);
+    editor.password = await bcrypt.hash(randomstring, 10);
+    editor.save();
+
+    let transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      service: "Gmail",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.NODEMAILER_USER,
+        pass: process.env.NODEMAILER_PASSWORD,
+      },
+    });
+
+    let message = {
+      from: "IEEE OSB",
+      to: req.body.email,
+      subject: "Password Changed Successfuly",
+      text: `Your Editor accounts' password have been successfuly changed, Your Email Address is ${req.body.email} and your new password is ${randomstring}, please don't share it with anyone!`,
+      html: `<h1>Your Editor accounts' password have been successfuly changed</h1><br><p>Your Email Address is <h3>${req.body.email}</h3> and your new password is <h3>${randomstring}</h3>, please don't share it with anyone!</p>`,
+    };
+    await transporter.sendMail(message).catch((err) => {
+      return res.status(400).json({ error: true, msg: "MAIL NOT SENT..." });
+    });
+
+    return res.status(200).json({ msg: "password changed successfuly" });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function updateUserAccount(req, res) {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ msg: "user not found" });
+    }
+    let updatedUser;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(
+        path.resolve("./uploads", req.file.filename),
+        {
+          folder: "members",
+        }
+      );
+      updatedUser = {
+        phone: req.body.phone || user.phone,
+        university_year: req.body.university_year || user.university_year,
+        image: {
+          public_id: result.public_id,
+          url: result.secure_url,
+        },
+      };
+    } else {
+      updatedUser = {
+        phone: req.body.phone || user.phone,
+        university_year: req.body.university_year || user.university_year,
+      };
+    }
+    await user.updateOne(updatedUser);
+    return res.status(200).json({ msg: "user updated successfuly" });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function deleteEditor(req, res) {
+  try {
+    const editor = await User.findById(req.params.id);
+    if (!editor) {
+      return res.status(404).json({ msg: "editor not found" });
+    }
+    if (editor.role != "EDITOR") {
+      return res.status(400).json({ msg: "this account is not an editor" });
+    }
+    await User.findByIdAndDelete(req.params.id);
+    return res.status(200).json({ msg: "editor deleted successfuly" });
+  } catch (error) {
+    res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function getEditors(req, res) {
+  try {
+    const editors = await User.find({ role: "EDITOR" });
+    if (!editors) {
+      return res.status(404).json({ msg: "no editors found" });
+    }
+    return res.status(200).json({ data: editors });
+  } catch (error) {
+    res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
 module.exports = {
   signupController,
   verify,
   resendOTP,
   resetPassword,
   resetRequest,
+  createEditorController,
+  resetEditorPasswordController,
+  updateUserAccount,
+  deleteEditor,
+  getEditors,
 };

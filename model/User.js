@@ -35,13 +35,28 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['ADMIN','EDITOR','USER'],
+      enum: ["ADMIN", "EDITOR", "USER"],
       required: true,
     },
-    university_code:{
+    university_code: {
       type: String,
       required: true,
-    }
+    },
+    phone: {
+      type: String,
+      required: false,
+      default: null,
+    },
+    university_year: {
+      type: String,
+      enum: ["FIRST","SECOND","THIRD","FORTH","FIFTH",null],
+      required: false,
+      default: null,
+    },
+    courses:{
+      type: Array,
+      default: [],
+    },
   },
   { timestamps: true }
 );
