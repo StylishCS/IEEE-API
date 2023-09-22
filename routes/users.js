@@ -32,8 +32,8 @@ router.get("/google", passport.authenticate("google", ["profile", "email"]));
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    successRedirect: "http://localhost:3000/users/success",
-    failureRedirect: "http://localhost:3000/users/failure",
+    successRedirect: "https://ieee-osb.onrender.com/users/success",
+    failureRedirect: "https://ieee-osb.onrender.com/users/failure",
   })
 );
 
