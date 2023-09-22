@@ -40,14 +40,17 @@ async function getCourse(req, res) {
   }
 }
 
-async function searchCourse(req,res){
+async function searchCourse(req, res) {
   try {
-    const course = await Course.find({name: req.body.name});
-    if(!course){
-      return res.status(404).json({msg: "course not found"});
+    const course = await Course.find({
+      name: { $regex: ".*" + req.body.name + ".*", $options: 'i' },
+    });
+    if (!course) {
+      return res.status(404).json({ msg: "course not found" });
     }
     return res.status(200).json({ data: course });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
 }
@@ -243,7 +246,6 @@ async function deleteContent(req, res) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
 }
-
 
 module.exports = {
   getCourses,
