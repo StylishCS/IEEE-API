@@ -6,7 +6,9 @@ const logger = require('morgan');
 const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
-const multer = require('multer');
+const passport = require('passport');
+const cookieSession = require("cookie-session");
+const passportSetup = require("./passport");
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
@@ -15,6 +17,14 @@ const dashboardRouter = require('./routes/dashboard');
 
 
 const app = express();
+
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["cyberwolve"],
+    maxAge: 24 * 60 * 60 * 100,
+  })
+);
 
 //database setup
 mongoose.connect(
@@ -38,6 +48,11 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

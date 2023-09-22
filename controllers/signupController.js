@@ -94,6 +94,71 @@ async function signupController(req, res) {
   }
 }
 
+async function google(req, res) {
+  try {
+    let user = await User.findOne({ email: req.user.emails[0].value });
+    if (user) {
+      const userWithoutPassword = { ...user };
+      delete userWithoutPassword._doc.password;
+      const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET_KEY, {
+        expiresIn: process.env.JWT_EXPIRE_IN,
+      });
+      return res.status(200).json({
+        user: userWithoutPassword._doc,
+        token: token,
+      });
+    }
+    user = new User({
+      name: req.user.displayName,
+      email: req.user.emails[0].value,
+      password: await bcrypt.hash(Math.random().toString(36).slice(-8), 10),
+      verified: req.user.emails[0].verified,
+      role: "USER",
+      image: {
+        public_id: req.user.id,
+        url: req.user.photos[0].value,
+      },
+      university_code: "null",
+    });
+    let transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      service: "Gmail",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.NODEMAILER_USER,
+        pass: process.env.NODEMAILER_PASSWORD,
+      },
+    });
+
+    let message = {
+      from: "IEEE OSB",
+      to: req.user.emails[0].value,
+      subject: "Welcome to IEEE OSB",
+      text: `Congrats! and welcome to IEEE OSB, your account have been created successfuly.`,
+      html: `<h1>Congrats!</h1><br><p>and welcome to IEEE OSB, your account have been created successfuly.</p>`,
+    };
+    await transporter.sendMail(message).catch((err) => {
+      return res.status(400).json({ error: true, msg: "MAIL NOT SENT..." });
+    });
+
+    await user.save();
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword._doc.password;
+
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: process.env.JWT_EXPIRE_IN,
+    });
+
+    res.status(200).json({
+      user: userWithoutPassword._doc,
+      token: token,
+    });
+  } catch (error) {
+    res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
 async function resendOTP(req, res) {
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
@@ -413,4 +478,5 @@ module.exports = {
   updateUserAccount,
   deleteEditor,
   getEditors,
+  google,
 };
