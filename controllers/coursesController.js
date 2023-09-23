@@ -1,5 +1,6 @@
 const { Course } = require("../model/Courses");
 const { User } = require("../model/User");
+const { Task } = require("../model/Task");
 const cloudinary = require("../utils/cloudinary");
 const path = require("path");
 
@@ -30,7 +31,7 @@ async function getActiveCourses(req, res) {
 
 async function getCourse(req, res) {
   try {
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findById(req.body.id);
     if (!course) {
       return res.status(404).json({ msg: "no course found.." });
     }
@@ -43,7 +44,7 @@ async function getCourse(req, res) {
 async function searchCourse(req, res) {
   try {
     const course = await Course.find({
-      name: { $regex: ".*" + req.body.name + ".*", $options: 'i' },
+      name: { $regex: ".*" + req.body.name + ".*", $options: "i" },
     });
     if (!course) {
       return res.status(404).json({ msg: "course not found" });
@@ -138,8 +139,8 @@ async function deleteCourse(req, res) {
 
 async function addStudent(req, res) {
   try {
-    const user = await User.findById(req.params.id);
-    const course = await Course.findById(req.body.id);
+    const user = await User.findById(req.body.userId);
+    const course = await Course.findById(req.body.courseId);
     if (!user) {
       return res.status(404).json({ msg: "user not found" });
     }
@@ -243,6 +244,34 @@ async function deleteContent(req, res) {
     return res.status(200).json({ msg: "content deleted" });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function addTask(req, res) {
+  try {
+    let media = {
+      secure_url: null
+    };
+    if (req.file) {
+      media = await cloudinary.uploader.upload(
+        path.resolve("./uploads", req.file.filename),
+        {
+          folder: "content",
+          resource_type: "auto",
+        }
+      );
+    }
+    const task = new Task({
+      title: req.body.title,
+      description: req.body.description,
+      file: media.secure_url,
+      deadline: req.body.deadline,
+      points: req.body.points
+    })
+    await task.save();
+    return res.status(201).json({msg:"task assigned"});
+  } catch (error) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
 }

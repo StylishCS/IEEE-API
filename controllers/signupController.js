@@ -406,7 +406,7 @@ async function resetEditorPasswordController(req, res) {
 
 async function updateUserAccount(req, res) {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.body.id);
     if (!user) {
       return res.status(404).json({ msg: "user not found" });
     }

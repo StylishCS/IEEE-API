@@ -22,7 +22,7 @@ router.post("/login", loginController);
 router.post("/forgot-password-otp", resendOTP);
 router.post("/forgot-password-verify", resetRequest);
 router.post("/forgot-password-reset", auth, resetPassword);
-router.patch("/updateUser/:id", auth, upload.single("image"), updateUserAccount);
+router.patch("/updateUser", auth, upload.single("image"), updateUserAccount);
 
 
 

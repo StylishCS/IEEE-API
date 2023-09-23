@@ -12,9 +12,8 @@ const {
 
 router.get("/", getCourses);
 router.get("/active", getActiveCourses);
-router.get("/:id", getCourse);
-router.post("/register/:id", auth, addStudent);
+router.get("/", getCourse);
+router.post("/register", auth, addStudent);
 router.post("/search", searchCourse);
-
 
 module.exports = router;
