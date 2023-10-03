@@ -53,10 +53,18 @@ const userSchema = new mongoose.Schema(
       required: false,
       default: null,
     },
-    courses:{
+    courses:{ 
       type: Array,
       default: [],
     },
+    submits:{
+      type: Array,
+      default: [],
+    },
+    points:{
+      type: Number,
+      default: 0,
+    }
   },
   { timestamps: true }
 );

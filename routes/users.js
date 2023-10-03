@@ -3,7 +3,7 @@ var router = express.Router();
 const passport = require("passport");
 const upload = require("../utils/uploadImage");
 const auth = require("../middlewares/protect");
-
+const { getEvent, getEvents } = require("../controllers/eventsController");
 const {
   signupController,
   verify,
@@ -23,8 +23,8 @@ router.post("/forgot-password-otp", resendOTP);
 router.post("/forgot-password-verify", resetRequest);
 router.post("/forgot-password-reset", auth, resetPassword);
 router.patch("/updateUser", auth, upload.single("image"), updateUserAccount);
-
-
+router.get("/events", getEvents);
+router.post("/event", getEvent);
 
 
 router.get("/google", passport.authenticate("google", ["profile", "email"]));
@@ -40,7 +40,7 @@ router.get(
 router.get("/success", google);
 
 router.get("/failure", async (req, res) => {
-  res.status(500).json({msg: "INTERNAL SERVER ERROR"});
+  res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
 });
 
 module.exports = router;

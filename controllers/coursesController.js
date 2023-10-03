@@ -251,26 +251,64 @@ async function deleteContent(req, res) {
 async function addTask(req, res) {
   try {
     let media = {
-      secure_url: null
+      secure_url: null,
     };
     if (req.file) {
       media = await cloudinary.uploader.upload(
         path.resolve("./uploads", req.file.filename),
         {
-          folder: "content",
+          folder: "tasks",
           resource_type: "auto",
         }
       );
+    }
+    const course = await Course.findById(req.body.courseId);
+    if (!course) {
+      return res.status(400).json({ msg: "course not found" });
     }
     const task = new Task({
       title: req.body.title,
       description: req.body.description,
       file: media.secure_url,
       deadline: req.body.deadline,
-      points: req.body.points
-    })
+      points: req.body.points,
+      week: req.body.week,
+      course: req.body.courseId,
+    });
     await task.save();
-    return res.status(201).json({msg:"task assigned"});
+    return res.status(201).json({ msg: "task assigned" });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function getTasks(req, res) {
+  try {
+    const tasks = await Task.find();
+    if (!tasks) {
+      return res.status(404).json({ msg: "no tasks found" });
+    }
+    return res.status(200).json({data: tasks});
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function getTask(req, res) {
+  try {
+    const task = await Task.findById(req.body.id);
+    if (!task) {
+      return res.status(404).json({ msg: "no tasks found" });
+    }
+    return res.status(200).json({data: task});
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function submitAssignment(req,res){
+  try {
+    
   } catch (error) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
@@ -289,4 +327,7 @@ module.exports = {
   addContent,
   deleteContent,
   searchCourse,
+  addTask,
+  getTasks,
+  getTask,
 };

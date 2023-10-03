@@ -30,6 +30,14 @@ const TaskSchema = new mongoose.Schema(
     points: {
       type: Number,
       required: true,
+    },
+    week:{
+      type: String,
+      required: true,
+    },
+    course:{
+      type: String,
+      required: true,
     }
   },
   { timestamps: true }
