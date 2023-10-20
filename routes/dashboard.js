@@ -5,6 +5,10 @@ const auth = require("../middlewares/protect");
 const admin = require("../middlewares/isAdmin");
 const editor = require("../middlewares/isEditor");
 const { addOrgnizer, getOrgnizers } = require("../controllers/addOrgnizer");
+const {
+  addChapterPhotos,
+  getChapterPhotos,
+} = require("../controllers/chapterController");
 const { createEvent } = require("../controllers/eventsController");
 const {
   getCourses,
@@ -58,5 +62,13 @@ router.post("/createEvent", auth, admin, upload.single("image"), createEvent);
 router.post("/addTask", auth, editor, upload.single("file"), addTask);
 router.post("/addOrganizer", auth, admin, upload.single("image"), addOrgnizer);
 router.get("/getOrganizers", getOrgnizers);
+router.post(
+  "/addChapterPhotos",
+  auth,
+  editor,
+  upload.single("image"),
+  addChapterPhotos
+);
+router.get("/chapterPhotos", getChapterPhotos)
 
 module.exports = router;
