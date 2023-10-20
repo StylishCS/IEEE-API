@@ -13,7 +13,10 @@ const {
   updateUserAccount,
   google,
 } = require("../controllers/signupController");
-const { loginController } = require("../controllers/loginController");
+const {
+  loginController,
+  currentUserController,
+} = require("../controllers/loginController");
 
 router.post("/signup", signupController);
 router.post("/verify", auth, verify);
@@ -25,7 +28,7 @@ router.post("/forgot-password-reset", auth, resetPassword);
 router.patch("/updateUser", auth, upload.single("image"), updateUserAccount);
 router.get("/events", getEvents);
 router.post("/event", getEvent);
-
+router.post("/currentUser", auth, currentUserController);
 
 router.get("/google", passport.authenticate("google", ["profile", "email"]));
 

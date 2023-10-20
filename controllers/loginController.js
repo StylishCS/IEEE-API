@@ -22,7 +22,12 @@ async function loginController(req, res) {
     });
 
     if (!user.verified) {
-      return res.status(401).json({verified: user.verified, email: user.email ,token: token ,msg: "User not verified.." });
+      return res.status(401).json({
+        verified: user.verified,
+        email: user.email,
+        token: token,
+        msg: "User not verified..",
+      });
     }
 
     const userWithoutPassword = { ...user };
@@ -36,7 +41,6 @@ async function loginController(req, res) {
     res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
 }
-
 
 async function dashboardLoginController(req, res) {
   try {
@@ -69,4 +73,22 @@ async function dashboardLoginController(req, res) {
     res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
 }
-module.exports = { loginController, dashboardLoginController };
+
+async function currentUserController(req, res) {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ msg: "user not found.." });
+    }
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword._doc.password;
+    return res.status(200).json({ data: userWithoutPassword._doc });
+  } catch (err) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+module.exports = {
+  loginController,
+  dashboardLoginController,
+  currentUserController,
+};

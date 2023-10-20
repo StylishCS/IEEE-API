@@ -9,6 +9,10 @@ const {
   addStudent,
   searchCourse,
   getTasks,
+  submitAssignment,
+  getStudentCourses,
+  getCourseTasks,
+  getTask,
 } = require("../controllers/coursesController");
 
 router.get("/", getCourses);
@@ -17,5 +21,9 @@ router.get("/", getCourse);
 router.post("/register", auth, addStudent);
 router.post("/search", searchCourse);
 router.get("/tasks", auth, getTasks);
+router.post("/submit", auth, upload.single("file"), submitAssignment);
+router.get("/userCourses", auth, getStudentCourses);
+router.get("/courseTasks", auth, getCourseTasks);
+router.get("/task", auth, getTask);
 
 module.exports = router;

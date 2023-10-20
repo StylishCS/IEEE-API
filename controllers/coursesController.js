@@ -3,6 +3,7 @@ const { User } = require("../model/User");
 const { Task } = require("../model/Task");
 const cloudinary = require("../utils/cloudinary");
 const path = require("path");
+const { nanoid } = require("nanoid");
 
 async function getCourses(req, res) {
   try {
@@ -116,8 +117,20 @@ async function updateCourse(req, res) {
         available: req.body.available || course.available,
       };
     }
+    let students = course.students;
+    for (let element of students) {
+      const user = await User.findOne({ name: element });
+      const index = user.courses.findIndex((item) => item == course.name);
+      if (index !== -1) {
+        user.courses[index] = updatedCourse.name;
+        await user.save();
+      }
+    }
     await course.updateOne(updatedCourse);
-    return res.status(200).json({ msg: "course updated successfuly" });
+    const courses = await Course.find();
+    return res
+      .status(200)
+      .json({ msg: "course updated successfuly", data: courses });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
@@ -129,6 +142,16 @@ async function deleteCourse(req, res) {
     const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ msg: "course not found" });
+    }
+    let students = course.students;
+    console.log("students: ", students);
+    for (let element of students) {
+      console.log("elements: ", element);
+      const user = await User.findOne({ name: element });
+      console.log("user courses: ", user.courses);
+      console.log("user course name: ", course.name);
+      user.courses.pull(course.name);
+      await user.save();
     }
     await Course.findByIdAndDelete(req.params.id);
     return res.status(200).json({ msg: "course deleted successfuly" });
@@ -189,7 +212,12 @@ async function getCourseStudents(req, res) {
     if (!course) {
       return res.status(404).json({ msg: "course not found" });
     }
-    return res.status(200).json({ data: course.students });
+    let arr = [];
+    for (const element of course.students) {
+      const student = await User.findOne({ name: element });
+      arr.push(student);
+    }
+    return res.status(200).json({ data: arr });
   } catch (error) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
@@ -220,6 +248,12 @@ async function addContent(req, res) {
       week: req.body.week,
     };
     course.content.push(content);
+    // console.log(course.content);
+    course.content.sort((a, b) => {
+      return a.week - b.week;
+    });
+
+    // console.log(course.content);
     await course.save();
     return res.status(200).json({ msg: "content added successfuly" });
   } catch (error) {
@@ -288,7 +322,7 @@ async function getTasks(req, res) {
     if (!tasks) {
       return res.status(404).json({ msg: "no tasks found" });
     }
-    return res.status(200).json({data: tasks});
+    return res.status(200).json({ data: tasks });
   } catch (error) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
@@ -300,15 +334,69 @@ async function getTask(req, res) {
     if (!task) {
       return res.status(404).json({ msg: "no tasks found" });
     }
-    return res.status(200).json({data: task});
+    return res.status(200).json({ data: task });
   } catch (error) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
 }
 
-async function submitAssignment(req,res){
+async function getCourseTasks(req, res) {
   try {
-    
+    const course = await Course.findById(req.body.courseId);
+    if (!course) {
+      return res.status(404).json({ msg: "course not found" });
+    }
+    const tasks = await Task.find({course: req.body.courseId});
+    if (!tasks) {
+      return res.status(404).json({ msg: "no tasks found" });
+    }
+    return res.status(200).json({ data: tasks });
+  } catch (error) {
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function submitAssignment(req, res) {
+  try {
+    const task = await Task.findById(req.body.taskId);
+    if (!task) {
+      return res.status(404).json({ msg: "task not found" });
+    }
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).json({ msg: "course not found" });
+    }
+    const media = await cloudinary.uploader.upload(
+      path.resolve("./uploads", req.file.filename),
+      {
+        folder: "submits",
+        resource_type: "auto",
+      }
+    );
+    const id = nanoid(10);
+    task.submits.push({ user: user._id, file: media.secure_url, submitId: id });
+    user.submits.push({ submitId: id, status: "pending", points: 0 });
+    await task.save();
+    await user.save();
+    return res.status(200).json({ msg: "task submitted successfuly" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
+  }
+}
+
+async function getStudentCourses(req, res) {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ msg: "user not found" });
+    }
+    let courses = new Array();
+    for (const element of user.courses) {
+      const course = await Course.findOne({ name: element });
+      courses.push(course);
+    }
+    return res.status(200).json({ data: courses });
   } catch (error) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
@@ -330,4 +418,7 @@ module.exports = {
   addTask,
   getTasks,
   getTask,
+  submitAssignment,
+  getStudentCourses,
+  getCourseTasks,
 };
