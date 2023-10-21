@@ -96,7 +96,6 @@ async function signupController(req, res) {
 
 async function google(req, res) {
   try {
-    console.log(req.user);
     let user = await User.findOne({ email: req.user.emails[0].value });
     if (user) {
       const userWithoutPassword = { ...user };
