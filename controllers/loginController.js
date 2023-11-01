@@ -80,9 +80,12 @@ async function currentUserController(req, res) {
     if (!user) {
       return res.status(404).json({ msg: "user not found.." });
     }
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: process.env.JWT_EXPIRE_IN,
+    });
     const userWithoutPassword = { ...user };
     delete userWithoutPassword._doc.password;
-    return res.status(200).json({ data: userWithoutPassword._doc });
+    return res.status(200).json({ data: userWithoutPassword._doc, token: token });
   } catch (err) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
