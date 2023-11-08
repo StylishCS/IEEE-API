@@ -346,11 +346,12 @@ async function getCourseTasks(req, res) {
     if (!course) {
       return res.status(404).json({ msg: "course not found" });
     }
-    const tasks = await Task.find({course: req.body.courseId});
+    const tasks = await Task.find({ course: req.body.courseId });
     if (!tasks) {
       return res.status(404).json({ msg: "no tasks found" });
     }
-    return res.status(200).json({ data: tasks });
+    let sortedTasks = tasks.sort((a, b) => a.week - b.week);
+    return res.status(200).json({ data: sortedTasks });
   } catch (error) {
     return res.status(500).json({ msg: "INTERNAL SERVER ERROR" });
   }
